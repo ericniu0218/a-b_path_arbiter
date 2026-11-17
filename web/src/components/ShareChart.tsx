@@ -59,11 +59,11 @@ export function ShareChart({ title, xs, shareA, bands = [], xLabel }: Props) {
       <div className="legend" aria-live="polite">
         <span className="legend-item">
           <i className="swatch fill-a" />
-          Line A (wireless){hover !== null && <strong> {(shareA[hover] * 100).toFixed(1)}%</strong>}
+          Wireless{hover !== null && <strong> {(shareA[hover] * 100).toFixed(1)}%</strong>}
         </span>
         <span className="legend-item">
           <i className="swatch fill-b" />
-          Line B (fiber){hover !== null && <strong> {((1 - shareA[hover]) * 100).toFixed(1)}%</strong>}
+          Fiber{hover !== null && <strong> {((1 - shareA[hover]) * 100).toFixed(1)}%</strong>}
         </span>
         {hover !== null && <span className="muted">at {xs[hover]} s</span>}
       </div>

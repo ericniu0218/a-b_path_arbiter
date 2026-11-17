@@ -64,6 +64,7 @@ for (const scenario of SCENARIOS) {
     end: run.config.end,
     messages: run.results.messages,
     messagesLost: run.results.messagesLost,
+    config: run.config,
   });
   console.log(`  ${run.id}: ${run.results.messages} messages, ${run.results.messagesLost} lost`);
 }

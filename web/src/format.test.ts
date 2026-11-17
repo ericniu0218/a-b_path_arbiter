@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCount, formatDuration, formatMbps, formatMicros, formatProbability, formatShare } from "./format";
+import { formatCompact, formatCount, formatLossShare, formatSpan, formatDuration, formatMbps, formatMicros, formatProbability, formatShare } from "./format";
 
 describe("format", () => {
   it("formats microseconds as ms from one millisecond up", () => {
@@ -28,5 +28,22 @@ describe("format", () => {
     expect(formatMbps(0)).toBe("unlimited");
     expect(formatMbps(100)).toBe("100 Mbps");
     expect(formatMbps(12.5)).toBe("12.5 Mbps");
+  });
+  it("formats short spans of time", () => {
+    expect(formatSpan(30)).toBe("30 s");
+    expect(formatSpan(120)).toBe("2 min");
+    expect(formatSpan(5400)).toBe("1 h 30 min");
+    expect(formatSpan(7200)).toBe("2 h");
+  });
+  it("formats big counts compactly", () => {
+    expect(formatCompact(11769925)).toBe("11.8 million");
+    expect(formatCompact(950000)).toBe("950,000");
+  });
+  it("formats loss as a short percentage", () => {
+    expect(formatLossShare(0, 100)).toBe("0%");
+    expect(formatLossShare(1, 11_000_000)).toBe("<0.01%");
+    expect(formatLossShare(32, 1000)).toBe("3.20%");
+    expect(formatLossShare(305, 1000)).toBe("30.5%");
+    expect(formatLossShare(0, 0)).toBe("–");
   });
 });

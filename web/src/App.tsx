@@ -17,7 +17,10 @@ export function App() {
   const { runs, error } = useRuns();
 
   useEffect(() => {
-    const onChange = () => setRoute(parseRoute(window.location.hash));
+    const onChange = () => {
+      setRoute(parseRoute(window.location.hash));
+      window.scrollTo(0, 0);
+    };
     window.addEventListener("hashchange", onChange);
     return () => window.removeEventListener("hashchange", onChange);
   }, []);
@@ -35,12 +38,10 @@ export function App() {
       <aside className="sidebar">
         <header>
           <h1>Protected Feed Lab</h1>
-          <p className="muted">A/B line arbitration on real ITCH data</p>
         </header>
         {isDemo ? (
           <p className="demo-note">
-            Demo: these runs were recorded from real Nasdaq data. Starting new runs needs the backend; see the project
-            README.
+            A demo with three recorded runs. Starting new runs needs the backend.
           </p>
         ) : (
           <a className="primary link-button" href="#/new">

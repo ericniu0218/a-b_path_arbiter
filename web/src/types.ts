@@ -14,6 +14,7 @@ export interface RunSummary {
   end: string | null;
   messages: number | null;
   messagesLost: number | null;
+  config: RunConfig;
 }
 
 export interface Fade {

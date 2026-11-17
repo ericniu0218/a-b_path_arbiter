@@ -28,7 +28,8 @@ public final class RunViews {
             String start,
             String end,
             Long messages,
-            Long messagesLost) {
+            Long messagesLost,
+            Config config) {
 
         public static Summary of(SimulationRun run) {
             RunResult r = run.getResult();
@@ -42,7 +43,8 @@ public final class RunViews {
                     c.startTime(),
                     c.endTime(),
                     r == null ? null : r.messages(),
-                    r == null ? null : r.messagesLost());
+                    r == null ? null : r.messagesLost(),
+                    Config.of(c, run.getFades()));
         }
     }
 

@@ -182,13 +182,15 @@ would earn its place if the service consumed a live feed from several sources.
 A React and TypeScript single-page app (Vite, no UI or chart libraries) for launching runs and
 reading them. With `docker compose up --build` it is at <http://localhost:3000>.
 
-- **New run form** with presets for the three scenarios in the results above.
-- **Run view**: the scenario, a one-sentence summary built from the stored numbers, headline
-  totals, the latency table, and two charts over time.
-  - *Arbitrated latency per second* (median and p99) with the fade shaded and the wireless-only
-    and fiber-only latencies as reference lines. In the baseline run the median jumps from the
-    wireless line to the fiber line for exactly the two minutes of the fade.
-  - *Which line's copy was delivered*: the wireless share of each second, as a stacked area.
+- **Start a run** by picking one of three scenarios (a two-minute fade, steady 2% loss, a narrow
+  link) and a data file. Everything else is under "Advanced settings".
+- **Run view** opens with the answer in plain words ("Using both lines, no messages were lost"
+  and what that cost in delay), three cards comparing the wireless line, the fiber line and both
+  combined, and one chart of the typical delay second by second with the fade shaded. In the
+  baseline run the delay jumps from the wireless line to the fiber line for exactly the two
+  minutes of the fade.
+- **More detail** (collapsed) holds the full latency table, a chart of which line delivered each
+  message, the totals, and the settings.
 - Runs refresh while they are queued or running. Long runs are downsampled to about 600 points,
   keeping the worst p99 in each bucket so spikes survive.
 - Charts are hand-written SVG with hover read-outs, light and dark themes, and a layout that works
@@ -203,7 +205,7 @@ To develop it against a running service:
 ```bash
 cd web && npm install
 FEEDLAB_API=http://localhost:8080 npm run dev
-npm test                             # 32 tests
+npm test                             # 43 tests
 ```
 
 ## Design decisions
@@ -222,7 +224,7 @@ npm test                             # 32 tests
 
 ## Tests
 
-79 tests, run by `./gradlew build`. The 9 integration tests start Postgres in Docker. The dashboard adds 32 more (`cd web && npm test`): chart maths, formatting, and component behaviour.
+79 tests, run by `./gradlew build`. The 9 integration tests start Postgres in Docker. The dashboard adds 43 more (`cd web && npm test`): chart maths, formatting, and component behaviour.
 
 - **Unit tests** for the packet codec, the arbiter, the packetizer and the path model.
 - **Property-based tests** (jqwik) drive the arbiter with thousands of random runs of loss, delay

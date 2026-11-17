@@ -1,12 +1,12 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { parseRoute } from "../App";
-import { headline } from "./RunDetailView";
+import { verdict } from "./RunDetailView";
 import { LatencyTable } from "./LatencyTable";
 import { LineChart } from "./LineChart";
 import { RunList } from "./RunList";
 import { toRequest } from "./NewRunForm";
-import type { Latency, RunDetail, RunSummary } from "../types";
+import type { Latency, RunConfig, RunDetail, RunSummary } from "../types";
 
 afterEach(cleanup);
 
@@ -25,33 +25,46 @@ const rows: Latency[] = [
 ];
 
 describe("LatencyTable", () => {
-  it("shows both segments with the three streams and formatted values", () => {
+  it("shows each segment with the three streams in plain words", () => {
     render(<LatencyTable rows={rows} />);
-    expect(screen.getByText(/Clear conditions/)).toBeTruthy();
     expect(screen.getByText(/During the fade/)).toBeTruthy();
-    expect(screen.getAllByText("Arbitrated A+B")).toHaveLength(2);
+    expect(screen.getByText(/Outside the fade/)).toBeTruthy();
+    expect(screen.getAllByText("Both lines combined")).toHaveLength(2);
     const wireless = screen.getAllByRole("row").find((r) => within(r).queryByText("Wireless alone") && r.textContent?.includes("32"));
-    expect(wireless?.textContent).toContain("3.2"); // 32 of 1000 lost = 3.200%
+    expect(wireless?.textContent).toContain("3.20%"); // 32 of 1000 lost
     expect(screen.getAllByText("6.51 ms").length).toBeGreaterThan(0);
   });
-  it("omits a segment that has no rows", () => {
+  it("calls the only segment the whole run when there was no fade", () => {
     render(<LatencyTable rows={rows.filter((r) => r.segment === "CLEAR")} />);
+    expect(screen.getByText(/Whole run/)).toBeTruthy();
     expect(screen.queryByText(/During the fade/)).toBeNull();
   });
 });
+
+const fadeConfig: RunConfig = {
+  inputFile: "f", start: null, end: null, maxMessages: null, gapTimeoutMillis: 5, seed: 42,
+  lineA: { latencyMicros: 3980, jitterMicros: 2, loss: 1e-5, bandwidthMbps: 100, maxQueueMillis: 2, fades: [{ startSeconds: 240, lengthSeconds: 120, loss: 0.3 }] },
+  lineB: { latencyMicros: 6550, jitterMicros: 1, loss: 1e-7 },
+};
 
 describe("RunList", () => {
   const run: RunSummary = {
     id: "7ec7951f-fc40-4564-a9ac-b7f8e148f34e", status: "COMPLETED", createdAt: "2026-11-17T08:00:00Z",
     finishedAt: null, inputFile: "day.itch", start: "09:30:00", end: "09:40:00", messages: 11769925, messagesLost: 0,
+    config: fadeConfig,
   };
   it("links each run and marks the selected one", () => {
     render(<RunList runs={[run]} selectedId={run.id} />);
     const link = screen.getByRole("link");
     expect(link.getAttribute("href")).toBe(`#/runs/${run.id}`);
     expect(link.getAttribute("aria-current")).toBe("page");
-    expect(link.textContent).toContain("09:30:00–09:40:00");
-    expect(link.textContent).toContain("11,769,925 msgs");
+    expect(link.textContent).toContain("Fade: 30% loss for 2 min");
+    expect(link.textContent).toContain("11.8 million messages");
+  });
+  it("flags a run that is still going or has failed", () => {
+    render(<RunList runs={[{ ...run, status: "RUNNING", messages: null }, { ...run, id: "b".repeat(36), status: "FAILED" }]} selectedId={null} />);
+    expect(screen.getByText(/Running…/)).toBeTruthy();
+    expect(screen.getByText(/Failed/)).toBeTruthy();
   });
   it("says so when there are no runs", () => {
     render(<RunList runs={[]} selectedId={null} />);
@@ -80,27 +93,30 @@ describe("LineChart", () => {
   });
 });
 
-describe("headline", () => {
+describe("verdict", () => {
   const base = {
     id: "x", status: "COMPLETED", createdAt: "", startedAt: null, finishedAt: null, error: null,
-    config: {
-      inputFile: "f", start: null, end: null, maxMessages: null, gapTimeoutMillis: 5, seed: 42,
-      lineA: { latencyMicros: 3980, jitterMicros: 2, loss: 1e-5, bandwidthMbps: 100, maxQueueMillis: 2, fades: [{ startSeconds: 240, lengthSeconds: 120, loss: 0.3 }] },
-      lineB: { latencyMicros: 6550, jitterMicros: 1, loss: 1e-7 },
-    },
+    config: fadeConfig,
     results: { messages: 1000, dataPackets: 500, durationSeconds: 600, gaps: 0, messagesLost: 0, averageMbps: 10, peakMbps: 400, burstWindowsOverCapacity: 1, burstWindowsActive: 100, maxBufferedPackets: 3, latency: rows },
   } as RunDetail;
 
-  it("states what arbitration delivered and what the wireless line lost in the fade", () => {
-    const text = headline(base)!;
-    expect(text).toContain("1,000 of 1,000 messages");
-    expect(text).toContain("no gaps");
-    expect(text).toContain("During the fade, wireless alone lost 30.5%");
-    expect(text).toContain("6.51 ms");
+  it("says nothing was lost, what wireless alone would have lost, and the cost in delay", () => {
+    const v = verdict(base)!;
+    expect(v.main).toBe("Using both lines, no messages were lost.");
+    expect(v.detail).toContain("During the fade, the wireless line alone would have lost 30.5% of its messages");
+    expect(v.detail).toContain("typical delay was 6.51 ms instead of 3.99 ms");
   });
-  it("pluralises gaps and has nothing to say before there are results", () => {
-    expect(headline({ ...base, results: { ...base.results!, gaps: 1, messagesLost: 5 } })).toContain("1 gap.");
-    expect(headline({ ...base, results: null })).toBeNull();
+  it("reports losses when there are some", () => {
+    expect(verdict({ ...base, results: { ...base.results!, messagesLost: 5 } })!.main).toBe(
+      "Using both lines, 5 of 1,000 messages were lost.",
+    );
+  });
+  it("says the delay stayed put when combining added almost nothing", () => {
+    const flat = rows.map((r) => (r.segment === "FADE" && r.source === "ARBITRATED" ? { ...r, p50Micros: 3995 } : r));
+    expect(verdict({ ...base, results: { ...base.results!, latency: flat } })!.detail).toContain("stayed at 4.00 ms");
+  });
+  it("has nothing to say before there are results", () => {
+    expect(verdict({ ...base, results: null })).toBeNull();
   });
 });
 
