@@ -181,3 +181,5 @@ input[type="text"], input:not([type]), input[inputmode], select {
 .detail-header > div { min-width: 0; }
 .detail-header h2 { overflow-wrap: anywhere; }
 .detail-header .badge { flex-shrink: 0; }
+
+.demo-note { font-size: 0.82rem; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; }

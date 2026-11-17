@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, isFinished } from "./api";
+import { api, isDemo, isFinished } from "./api";
 import type { RunDetail, RunSummary, TimelinePoint } from "./types";
 
 /** Calls {@code load} now and then every {@code intervalMs}, ignoring results that arrive after unmount. */
@@ -43,7 +43,8 @@ export function usePolling<T>(load: () => Promise<T>, intervalMs: number, deps: 
 }
 
 export function useRuns(): { runs: RunSummary[] | null; error: string | null } {
-  const { data, error } = usePolling(api.runs, 3000, []);
+  // Recorded runs never change, so a demo build loads the list once.
+  const { data, error } = usePolling(api.runs, 3000, [], () => isDemo);
   return { runs: data, error };
 }
 

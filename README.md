@@ -194,12 +194,16 @@ reading them. With `docker compose up --build` it is at <http://localhost:3000>.
 - Charts are hand-written SVG with hover read-outs, light and dark themes, and a layout that works
   on a phone.
 
+**Hosting it.** A demo build (`npm run build:demo`) shows three recorded runs with no backend, so
+it can be hosted on Vercel for free. See [docs/DEPLOY.md](docs/DEPLOY.md) for that and for the
+full-stack option.
+
 To develop it against a running service:
 
 ```bash
 cd web && npm install
 FEEDLAB_API=http://localhost:8080 npm run dev
-npm test                             # 27 tests
+npm test                             # 32 tests
 ```
 
 ## Design decisions
@@ -218,7 +222,7 @@ npm test                             # 27 tests
 
 ## Tests
 
-79 tests, run by `./gradlew build`. The 9 integration tests start Postgres in Docker. The dashboard adds 27 more (`cd web && npm test`): chart maths, formatting, and component behaviour.
+79 tests, run by `./gradlew build`. The 9 integration tests start Postgres in Docker. The dashboard adds 32 more (`cd web && npm test`): chart maths, formatting, and component behaviour.
 
 - **Unit tests** for the packet codec, the arbiter, the packetizer and the path model.
 - **Property-based tests** (jqwik) drive the arbiter with thousands of random runs of loss, delay
