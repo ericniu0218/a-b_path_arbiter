@@ -1,0 +1,9 @@
+.gradle/
+build/
+*.itch
+*.gz
+*.csv
+.idea/
+*.iml
+.DS_Store
+data/

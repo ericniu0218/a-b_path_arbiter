@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: feedlab-service
+  datasource:
+    # Defaults match docker-compose.yml and are for local development only.
+    url: ${FEEDLAB_DB_URL:jdbc:postgresql://localhost:5432/feedlab}
+    username: ${FEEDLAB_DB_USER:feedlab}
+    password: ${FEEDLAB_DB_PASSWORD:feedlab}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 500
+        order_inserts: true
+  mvc:
+    problemdetails:
+      enabled: true
+
+feedlab:
+  # Input files are only ever read from this directory.
+  data-dir: ${FEEDLAB_DATA_DIR:data}
