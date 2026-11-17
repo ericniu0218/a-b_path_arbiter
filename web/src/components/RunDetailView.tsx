@@ -132,8 +132,16 @@ export function RunDetailView({ id }: { id: string }) {
               </span>
             </div>
             <div className="stat">
-              <span className="stat-value">{formatShare(results.burstWindowsOverCapacity, results.burstWindowsActive, 2)}</span>
-              <span className="stat-label">of 1 ms windows exceed line A's capacity</span>
+              <span className="stat-value">
+                {run.config.lineA.bandwidthMbps === 0
+                  ? "–"
+                  : formatShare(results.burstWindowsOverCapacity, results.burstWindowsActive, 2)}
+              </span>
+              <span className="stat-label">
+                {run.config.lineA.bandwidthMbps === 0
+                  ? "line A has unlimited bandwidth in this run"
+                  : "of 1 ms windows exceed line A's capacity"}
+              </span>
             </div>
           </section>
 

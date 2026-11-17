@@ -1,4 +1,5 @@
 # One command to run the whole thing:  docker compose up --build
+# Dashboard on http://localhost:3000, API on http://localhost:8080
 # The database password below is for local development only.
 services:
   db:
@@ -29,6 +30,13 @@ services:
       - ./data:/data:ro
     ports:
       - "${FEEDLAB_PORT:-8080}:8080"
+
+  web:
+    build: ./web
+    depends_on:
+      - service
+    ports:
+      - "${FEEDLAB_WEB_PORT:-3000}:80"
 
 volumes:
   dbdata:

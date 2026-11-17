@@ -138,7 +138,7 @@ A Spring Boot service wraps the simulator so runs can be requested over HTTP, st
 and compared later. The simulator is unchanged, and the service never reimplements any of it.
 
 ```bash
-docker compose up --build            # Postgres and the service; set FEEDLAB_PORT if 8080 is taken
+docker compose up --build            # Postgres, the service and the dashboard; set FEEDLAB_PORT or FEEDLAB_WEB_PORT if 8080 or 3000 is taken
 curl localhost:8080/api/inputs       # files in ./data that a run may use
 
 curl -X POST localhost:8080/api/runs -H 'Content-Type: application/json' -d '{
@@ -177,6 +177,31 @@ paths are simulated on one virtual clock inside the process, and putting Kafka b
 would add real queueing delay and ordering effects that the model is meant to control. Kafka
 would earn its place if the service consumed a live feed from several sources.
 
+## The dashboard
+
+A React and TypeScript single-page app (Vite, no UI or chart libraries) for launching runs and
+reading them. With `docker compose up --build` it is at <http://localhost:3000>.
+
+- **New run form** with presets for the three scenarios in the results above.
+- **Run view**: the scenario, a one-sentence summary built from the stored numbers, headline
+  totals, the latency table, and two charts over time.
+  - *Arbitrated latency per second* (median and p99) with the fade shaded and the wireless-only
+    and fiber-only latencies as reference lines. In the baseline run the median jumps from the
+    wireless line to the fiber line for exactly the two minutes of the fade.
+  - *Which line's copy was delivered*: the wireless share of each second, as a stacked area.
+- Runs refresh while they are queued or running. Long runs are downsampled to about 600 points,
+  keeping the worst p99 in each bucket so spikes survive.
+- Charts are hand-written SVG with hover read-outs, light and dark themes, and a layout that works
+  on a phone.
+
+To develop it against a running service:
+
+```bash
+cd web && npm install
+FEEDLAB_API=http://localhost:8080 npm run dev
+npm test                             # 27 tests
+```
+
 ## Design decisions
 
 - **The arbiter is a plain library with no clock, no threads and no I/O.** Every call carries the
@@ -193,7 +218,7 @@ would earn its place if the service consumed a live feed from several sources.
 
 ## Tests
 
-79 tests, run by `./gradlew build`. The 9 integration tests start Postgres in Docker.
+79 tests, run by `./gradlew build`. The 9 integration tests start Postgres in Docker. The dashboard adds 27 more (`cd web && npm test`): chart maths, formatting, and component behaviour.
 
 - **Unit tests** for the packet codec, the arbiter, the packetizer and the path model.
 - **Property-based tests** (jqwik) drive the arbiter with thousands of random runs of loss, delay
@@ -228,11 +253,12 @@ This is an offline analysis tool, not a feed handler.
 | [core](core) | MoldUDP64 codec and the arbiter. No runtime dependencies. |
 | [sim](sim) | ITCH reader, packetizer, path simulator, metrics, report and CLI. |
 | [service](service) | Spring Boot API, JPA entities, Flyway schema. |
+| [web](web) | React dashboard. |
 
 ## Next
 
 1. Run a full trading day, not just the first ten minutes.
-2. React dashboard over the per-second timeline, comparing runs side by side.
+2. Compare two runs side by side in the dashboard.
 3. Compare arbitration strategies, for example allowing out-of-order delivery across independent
    instruments to avoid the head-of-line stalls described above.
 

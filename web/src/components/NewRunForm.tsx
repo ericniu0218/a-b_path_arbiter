@@ -37,6 +37,7 @@ const PRESETS: { label: string; fields: Partial<Fields> }[] = [
   { label: "Narrow 50 Mbps link, no fade", fields: { fade: false, loss: "0.001", mbps: "50" } },
 ];
 
+export type { Fields };
 export function toRequest(f: Fields): RunRequest {
   const number = (name: string, text: string): number => {
     const value = Number(text);
